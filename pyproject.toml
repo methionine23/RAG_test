@@ -1,0 +1,25 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "genephen-eval"
+version = "0.1.0"
+description = "Reference-free, stage-decomposed fidelity evaluation for LLM/RAG clinical-genetic summarization"
+readme = "genephen_eval/README.md"
+requires-python = ">=3.10"
+# Core harness is stdlib-only. Optional model-based metrics (NLI, LLM-judge) and
+# real backends (Vertex) are added as extras in a later phase.
+dependencies = []
+
+[project.optional-dependencies]
+dev = ["pytest"]
+# future:
+# nli = ["alignscore", "minicheck"]
+# vertex = ["google-cloud-aiplatform", "langchain-google-vertexai"]
+
+[project.scripts]
+genephen-eval = "genephen_eval.cli:main"
+
+[tool.setuptools]
+packages = ["genephen_eval", "genephen_eval.backends", "genephen_eval.metrics"]

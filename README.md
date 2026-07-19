@@ -38,25 +38,35 @@ docs/
   03_schemas_and_architecture.md data schemas + harness architecture + backend interface
   04_rag_stage_evaluation.md     stage-decomposed fidelity (sectioning → retrieval → generation) + attribution
   05_prior_art_and_genephen_plugin.md  baseline notebook analysis + genePhen plugin path
-prototype/
-  fidelity_demo.py               stdlib-only reference-free cell-level fidelity demo
-  rag_stage_demo.py              stdlib-only sectioning + retrieval fidelity + attribution demo
-  fetch_entrez.py                pull full HSPB1 XML from NCBI (run where NCBI egress is allowed)
-  sample/hspb1_pubmed_sample.xml synthetic PubMed-XML fixture (offline demo input)
-  README.md                      how to run the demos and what they approximate
+genephen_eval/                   ← the evaluation harness (real, tested package)
+  schemas.py ingestion.py inventory.py runner.py report.py cli.py
+  metrics/   sectioning · retrieval · generation · consistency · attribution
+  backends/  base (SummarizerBackend) · mock (deterministic, offline)
+  README.md
+tests/test_harness.py            13 unit + end-to-end tests (stdlib unittest)
+prototype/                       ← standalone illustrative demos + data
+  fidelity_demo.py rag_stage_demo.py fetch_entrez.py sample/hspb1_pubmed_sample.xml
+pyproject.toml
 ```
 
-## Quick start (prototypes, no deps / no network)
+## Quick start (no deps / no network)
 
 ```bash
-python3 prototype/fidelity_demo.py     # cell-level faithfulness / recall / provenance / stability
-python3 prototype/rag_stage_demo.py    # sectioning + retrieval fidelity, with per-fact stage attribution
+# the harness: end-to-end fidelity report (ingest → chunk → retrieve → extract → S1/S2/S3 → attribution)
+python3 -m genephen_eval.cli --xml prototype/sample/hspb1_pubmed_sample.xml --task case
+python3 -m genephen_eval.cli --xml prototype/sample/hspb1_pubmed_sample.xml --chunker naive_fixed
+python3 -m unittest discover -s tests          # 13 tests
+
+# the standalone illustrative demos
+python3 prototype/fidelity_demo.py             # cell-level faithfulness / recall / provenance / stability
+python3 prototype/rag_stage_demo.py            # sectioning + retrieval fidelity + per-fact attribution
 ```
 
-`fidelity_demo.py` runs a toy HSPB1 example and flags a hallucinated cell + a missing
-variant with no gold table. `rag_stage_demo.py` parses the PubMed-XML fixture, compares a
-structure-blind chunker vs a section-aware one, and shows *which stage* (sectioning vs
-retrieval) loses each fact. Both are stubs of the metric stack in `docs/02` and `docs/04`.
+The harness sweeps a temperature grid with K samples per cell; with the offline mock
+backend, faithfulness and recall fall, hallucination rises, self-consistency drops, and
+the attribution loss budget shifts to GENERATION as temperature increases — while S1/S2
+stay flat. genePhen / Vertex plug in later behind `SummarizerBackend` (see
+`genephen_eval/README.md` and `docs/05`).
 
 > **Note on data:** NCBI Entrez egress is blocked inside the agent sandbox, so the demos
 > use a synthetic fixture. Run `prototype/fetch_entrez.py` in your Vertex/GCP environment
