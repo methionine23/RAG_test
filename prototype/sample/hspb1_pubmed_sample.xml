@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  SYNTHETIC fixture, structurally modeled on NCBI PubMed / PMC full-text XML.
+  It is NOT a redistributed article. Variant/phenotype values are illustrative
+  (real HSPB1 dHMN/CMT2F variants used only as realistic examples). Purpose:
+  exercise sectioning + retrieval fidelity metrics offline. Replace with real
+  Entrez output via prototype/fetch_entrez.py in an environment with NCBI access.
+-->
+<pmc-article>
+  <front>
+    <article-meta>
+      <article-id pub-id-type="pmid">00000001</article-id>
+      <title-group>
+        <article-title>HSPB1 variants in distal hereditary motor neuropathy: two families</article-title>
+      </title-group>
+    </article-meta>
+  </front>
+  <body>
+    <sec sec-type="intro">
+      <title>Introduction</title>
+      <p>Small heat shock protein HSPB1 (HSP27) mutations cause distal hereditary
+      motor neuropathy (dHMN) and axonal Charcot-Marie-Tooth disease type 2F. We
+      describe two unrelated families with HSPB1 variants and variable onset.</p>
+    </sec>
+    <sec sec-type="cases">
+      <title>Case Reports</title>
+      <p>Family 1: The proband was a 42-year-old man carrying a heterozygous
+      c.404C&gt;T (p.Ser135Phe) variant in HSPB1, segregating with an autosomal
+      dominant pattern. Onset of lower-limb weakness was at age 35. Nerve
+      conduction studies showed an axonal motor neuropathy; creatine kinase was
+      mildly elevated at 320 U/L.</p>
+      <p>Family 2: A 29-year-old woman carried a heterozygous c.250G&gt;A
+      (p.Gly84Arg) variant. Age of onset was 24 years, with distal weakness and
+      pes cavus. Family history was positive across two generations.</p>
+    </sec>
+    <sec sec-type="results">
+      <title>Genetic and Clinical Findings</title>
+      <table-wrap id="tab1">
+        <label>Table 1</label>
+        <caption><p>Clinical and molecular features of the patients.</p></caption>
+        <table>
+          <thead>
+            <tr><th>Case</th><th>Sex</th><th>Age of onset</th><th>Variant (protein)</th><th>Inheritance</th><th>Key symptom</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>1</td><td>Male</td><td>35</td><td>p.Ser135Phe</td><td>AD</td><td>lower-limb weakness</td></tr>
+            <tr><td>2</td><td>Female</td><td>24</td><td>p.Gly84Arg</td><td>AD</td><td>pes cavus</td></tr>
+            <tr><td>3</td><td>Female</td><td>50</td><td>p.Pro182Leu</td><td>AD</td><td>late-onset distal weakness</td></tr>
+          </tbody>
+        </table>
+      </table-wrap>
+      <p>A third patient (Case 3), the aunt of the Family 2 proband, carried the
+      p.Pro182Leu variant with late onset at age 50.</p>
+    </sec>
+    <sec sec-type="discussion">
+      <title>Discussion</title>
+      <p>These findings expand the phenotypic spectrum of HSPB1-related neuropathy.
+      The p.Ser135Phe substitution has been reported to reduce chaperone activity.</p>
+    </sec>
+  </body>
+</pmc-article>

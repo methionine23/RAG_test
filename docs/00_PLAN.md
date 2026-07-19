@@ -67,14 +67,20 @@ questions per claim / per record:
 3. **Completeness** — of everything the source offers, how much did we capture?
    (recall-like, measured against a mechanically-built source inventory, not human gold)
 
+And because fidelity can be lost at more than one place, we **decompose the RAG
+pipeline** — Sectioning/Chunking → Retrieval → Generation — and score each stage, so a
+missing/wrong cell is *attributed* to the stage that caused it (split chunk vs missed
+retrieval vs mis-extraction). This directly supports measuring the **chunking and
+retrieval** stages, not only summarization. Full method in `docs/04`.
+
 ## 4. Workstreams & phases
 
 | Phase | Name | Key outputs | Depends on |
 | --- | --- | --- | --- |
 | P0 | Scoping & schemas | This plan, table/claim/provenance schemas, harness skeleton, prototype metric | — |
 | P1 | UC1 corpus & ingestion | 30–50 HSPB1 PDFs ingested, table-aware chunking, GTR/XML + PDF parsers | P0 |
-| P2 | Backends wired | `SummarizerBackend` for genePhen, Vertex RAG Engine, no-RAG baseline; provenance capture | P1 |
-| P3 | Metric stack | Faithfulness (NLI + LLM-judge + exact-value grounding), coverage vs inventory, attribution, self-consistency | P0 |
+| P2 | Backends wired | `SummarizerBackend` for genePhen, Vertex RAG Engine, and the baseline notebook agent (`docs/05`); capture retrieved chunks + chunk boundaries + input spans | P1 |
+| P3 | Metric stack | S1 sectioning + S2 retrieval metrics (`docs/04`); S3 faithfulness (NLI + LLM-judge + exact-value grounding), coverage vs inventory, provenance, self-consistency; stage attribution | P0 |
 | P4 | Experiment matrix | Temperature sweep × backend × use case; runs logged, cached, reproducible | P2, P3 |
 | P5 | Calibration | Small human spot-check set; judge-vs-human agreement; metric reliability report | P3 |
 | P6 | UC2 & UC3 | Long biochem PDF (pathway/relation fidelity); GTR XML (structured-source control) | P3 |
@@ -88,16 +94,21 @@ automated metrics are trustworthy.
 They deliberately span a **source-structure spectrum**, which isolates different
 failure modes:
 
-- **UC1 — HSPB1 papers (30–50), the core.** Semi-structured: prose + the papers' own
-  tables/figures. Primary benchmark for mutation + clinical-case extraction; where the
-  temperature study runs. Small enough to build a real RAG (genePhen + Vertex) over.
+- **UC1 — HSPB1 (PubMed/PMC full XML), the core.** Start with **1–2 full XML** documents
+  from Entrez (`prototype/fetch_entrez.py`, `db=pmc` for full text — **not abstracts**,
+  because the analysis needs case-level detail), scaling toward the 30–50 range. Explicit
+  section + table markup makes a high-fidelity section-aware chunker achievable. Primary
+  benchmark for mutation + clinical-case extraction and where the temperature study and
+  full S1/S2/S3 decomposition run.
 - **UC2 — Large biochemistry PDF with pathways.** Unstructured, very long, *relational*
-  (enzyme → reaction → product). Tests long-document chunking + multi-hop/cross-page
-  fidelity and **relation-level** (triple) faithfulness rather than tabular cells.
-- **UC3 — NIH GTR XML.** Already semi-structured with its own schema. Acts as a
-  **control**: the "source of truth" is nearly explicit in XML fields, so it isolates
-  pure **rewording drift** (faithfulness with minimal retrieval ambiguity) and tests
-  XML-aware ingestion vs PDF parsing.
+  (enzyme → reaction → product). **RAG designed around a pathway schema** (entity /
+  reaction / relation); no native markup, so sectioning depends on a layout parser →
+  highest-risk S1. Tests long-document chunking + multi-hop/cross-page fidelity and
+  **relation-level** (triple) faithfulness rather than tabular cells.
+- **UC3 — NIH GTR XML.** Its own schema → **RAG chunked along GTR elements** (lab / test
+  / condition / method), not character windows. Acts as a **control**: the "source of
+  truth" is nearly explicit in XML fields, so it isolates pure **rewording drift**
+  (cleanest sectioning, minimal retrieval ambiguity) and tests XML-aware ingestion.
 
 Reading them together: **UC3 (structured) → UC1 (semi-structured) → UC2 (unstructured)**
 lets us attribute fidelity loss to source structure, retrieval, or generation.

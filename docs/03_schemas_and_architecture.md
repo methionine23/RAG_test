@@ -24,20 +24,23 @@ JSON-serializable; every value-bearing field can carry provenance.
 
 ### 1.2 Clinical-case table (one row per case)
 
-Categories mirror CaseReportBench's system-level structure (arXiv 2505.17265).
+Field names align to the **baseline notebook's `DetailedReportAgent`** (`docs/05`) so the
+harness is drop-in for the existing agents; category grouping mirrors CaseReportBench's
+system-level structure (arXiv 2505.17265).
 
 | Field | Type | Notes |
 | --- | --- | --- |
 | `case_id` | str | |
-| `sex` | enum? | |
-| `age_onset` | str? | keep source units |
-| `phenotype` | list[str] | free text + HPO ids if present |
-| `variants` | list[str] | links to mutation `record_id`s |
-| `family_history` | str? | |
-| `labs_imaging` | str? | |
-| `treatment` | str? | |
-| `outcome` | str? | |
-| `_provenance` | list[Span] | |
+| `PMID` | str? | source article id |
+| `Mutation` | str? | as written in source; links to mutation `record_id` / `hgvs_*` |
+| `Age` | str? | patient age; keep source units |
+| `Sex` | enum? | Male/Female (normalize M/F at match time only) |
+| `Age_of_onset` | str? | keep source units |
+| `Symptoms` | list[str] | free text + HPO ids if present |
+| `Laboratory_findings` | str? | labs / imaging / biomarkers |
+| `Family_history` | str? | incl. ethnicity / cohort size if mentioned |
+| `_provenance` | list[Span] | per-field spans (see §1.4) |
+| `_input_span` | Span? | the text actually fed to the model for this row (guards against "field absent from input" being scored as a hallucination — `docs/05` §1) |
 
 ### 1.3 Relation triple (UC2 pathways)
 
