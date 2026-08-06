@@ -105,7 +105,14 @@ directly onto S1:
 - **UC3 NIH GTR XML.** Chunk **along the GTR schema** (lab / test / condition / method
   elements), not by character windows. Sectioning fidelity ≈ correct element-to-field
   routing; because the schema is explicit this is the cleanest S1 and isolates S3
-  rewording drift.
+  rewording drift. **Implemented** (offline): `ingestion.parse_gtr_xml` routes each
+  `<GTRLabTest>` into a section with `gene / lab / condition / method` fields;
+  `chunk_gtr_schema` keeps one test per chunk; `inventory._gtr_units` builds
+  (test→condition) and (test→method) relation triples as the recall standard; the mock
+  backend's `--task gtr` extractor injects the same temperature-driven omission /
+  rewording / hallucination. Synthetic fixture `prototype/sample/gtr_hspb1_sample.xml`
+  (swap for real `efetch db=gtr` output). With the schema chunker S1/S2 are perfect and
+  all temperature loss attributes to GENERATION — exactly the isolation this UC is for.
 - **UC2 biochem PDF (pathways).** No native markup → S1 depends on a layout/section
   parser; define a **pathway schema** (entity / reaction / relation) and chunk by
   parsed sections + figure/caption blocks. Highest-risk S1; relation-triple facts

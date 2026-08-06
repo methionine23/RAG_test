@@ -11,9 +11,13 @@ The user asked for FULL XML (not abstracts) because the fidelity analysis needs
 detail. For full text prefer PMC (efetch db=pmc, rettype=full); PubMed (db=pubmed)
 returns abstracts + metadata only.
 
+For the UC3 GTR use case, pull test records with db=gtr (feed the XML to
+genephen_eval.ingestion.parse_gtr_xml).
+
 Usage:
   python3 fetch_entrez.py --email you@example.com --pmcids PMC1234567 PMC7654321
   python3 fetch_entrez.py --email you@example.com --pmids 22176143 21611841 --db pubmed
+  python3 fetch_entrez.py --email you@example.com --gtrids 500001 500002 --db gtr
 
 Writes one XML file per id into sample/entrez/.
 """
@@ -50,17 +54,20 @@ def fetch(db: str, uid: str, email: str, api_key: str | None) -> bytes:
 def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--email", required=True, help="NCBI requires a contact email")
-    ap.add_argument("--db", default="pmc", choices=["pmc", "pubmed"],
-                    help="pmc = full text (preferred); pubmed = abstract only")
+    ap.add_argument("--db", default="pmc", choices=["pmc", "pubmed", "gtr"],
+                    help="pmc = full text (preferred); pubmed = abstract only; "
+                         "gtr = Genetic Testing Registry records (UC3)")
     ap.add_argument("--pmcids", nargs="*", default=[])
     ap.add_argument("--pmids", nargs="*", default=[])
+    ap.add_argument("--gtrids", nargs="*", default=[], help="GTR test uids (for db=gtr)")
     ap.add_argument("--api-key", default=os.environ.get("NCBI_API_KEY"))
     args = ap.parse_args()
 
-    ids = args.pmcids if args.db == "pmc" else args.pmids
-    ids = ids or (args.pmcids + args.pmids)
+    ids = {"pmc": args.pmcids, "pubmed": args.pmids, "gtr": args.gtrids}[args.db]
+    ids = ids or (args.pmcids + args.pmids + args.gtrids)
     if not ids:
-        print("Provide --pmcids (for db=pmc) or --pmids (for db=pubmed).", file=sys.stderr)
+        print("Provide --pmcids (db=pmc), --pmids (db=pubmed), or --gtrids (db=gtr).",
+              file=sys.stderr)
         return 2
 
     os.makedirs(OUT_DIR, exist_ok=True)

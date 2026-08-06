@@ -3,8 +3,8 @@ import os
 import unittest
 
 from genephen_eval.backends.mock import MockRAGBackend
-from genephen_eval.ingestion import (chunk_naive_fixed, chunk_section_aware,
-                                     parse_pmc_xml)
+from genephen_eval.ingestion import (chunk_gtr_schema, chunk_naive_fixed,
+                                     chunk_section_aware, parse_gtr_xml, parse_pmc_xml)
 from genephen_eval.inventory import build_inventory
 from genephen_eval.metrics import consistency, retrieval, sectioning
 from genephen_eval.metrics.attribution import attribute
@@ -15,6 +15,8 @@ from genephen_eval.schemas import Record
 
 FIXTURE = os.path.join(os.path.dirname(__file__), "..", "prototype", "sample",
                        "hspb1_pubmed_sample.xml")
+GTR_FIXTURE = os.path.join(os.path.dirname(__file__), "..", "prototype", "sample",
+                           "gtr_hspb1_sample.xml")
 
 
 class TestIngestion(unittest.TestCase):
@@ -124,6 +126,63 @@ class TestEndToEnd(unittest.TestCase):
         nv_loss = nv["by_temperature"][0]["attribution"]["loss_budget"]["SECTIONING"]
         self.assertEqual(sa_loss, 0.0)
         self.assertGreater(nv_loss, 0.0)
+
+
+class TestGTR(unittest.TestCase):
+    """UC3 — NIH GTR XML: schema-routed sectioning + triple extraction."""
+
+    def setUp(self):
+        self.doc = parse_gtr_xml(GTR_FIXTURE)
+        self.inv = build_inventory(self.doc)
+        from genephen_eval.cli import TASKS
+        self.task = TASKS["gtr"]
+
+    def test_parse_routes_tests_and_fields(self):
+        self.assertEqual(len(self.doc.sections), 2)      # two lab tests
+        self.assertIn("Condition:", self.doc.text)
+        self.assertIn("Method:", self.doc.text)
+        self.assertIn("Charcot-Marie-Tooth disease axonal type 2F", self.doc.text)
+
+    def test_inventory_builds_triples_only(self):
+        self.assertEqual({u.kind for u in self.inv}, {"triple"})
+        # 3 conditions + 3 methods across the two tests
+        self.assertEqual(len(self.inv), 6)
+        self.assertIn("Next generation sequencing panel", {u.value for u in self.inv})
+
+    def test_inventory_spans_point_at_source_value(self):
+        # each fact's recorded span must slice back to its exact value
+        for u in self.inv:
+            self.assertEqual(self.doc.text[u.span.start:u.span.end], u.value)
+
+    def test_schema_chunker_keeps_each_test_whole(self):
+        chunks = chunk_gtr_schema(self.doc)
+        self.assertEqual(len(chunks), 2)
+        s1 = sectioning.sectioning_metrics(chunks, self.doc, self.inv)
+        self.assertEqual(s1["boundary_alignment"], 1.0)
+        self.assertEqual(s1["fact_locality"], 1.0)
+
+    def test_schema_chunker_beats_naive_on_boundaries(self):
+        sa = sectioning.sectioning_metrics(chunk_gtr_schema(self.doc), self.doc, self.inv)
+        nv = sectioning.sectioning_metrics(chunk_naive_fixed(self.doc, 120), self.doc, self.inv)
+        self.assertGreater(sa["boundary_alignment"], nv["boundary_alignment"])
+
+    def test_gtr_detectors_inert_on_pmc(self):
+        # the GTR markers must not fire on a PMC document (no cross-schema bleed)
+        pmc_inv = build_inventory(parse_pmc_xml(FIXTURE))
+        self.assertNotIn("triple", {u.kind for u in pmc_inv})
+
+    def test_end_to_end_temperature_degrades_gtr(self):
+        res = run_experiment(MockRAGBackend(chunker="gtr_schema"), self.doc, self.task,
+                             ExperimentConfig(samples_per_cell=8))
+        rows = res["by_temperature"]
+        self.assertEqual(res["n_inventory"], 6)
+        self.assertEqual(rows[0]["silver_recall"], 1.0)                  # faithful at T=0
+        self.assertEqual(rows[0]["faithfulness"], 1.0)
+        recalls = [r["silver_recall"] for r in rows]
+        self.assertEqual(recalls, sorted(recalls, reverse=True))         # monotone down
+        # loss with this perfect chunker/retriever is generation, never sectioning
+        self.assertEqual(rows[0]["attribution"]["loss_budget"]["SECTIONING"], 0.0)
+        self.assertGreater(rows[-1]["attribution"]["loss_budget"]["GENERATION"], 0.0)
 
 
 if __name__ == "__main__":

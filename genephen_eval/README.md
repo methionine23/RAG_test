@@ -13,6 +13,9 @@ python -m genephen_eval.cli --xml prototype/sample/hspb1_pubmed_sample.xml --tas
 # compare a structure-blind vs section-aware chunker
 python -m genephen_eval.cli --xml prototype/sample/hspb1_pubmed_sample.xml --chunker naive_fixed
 
+# UC3 — NIH GTR XML, chunked along the GTR schema (test → gene / condition / method)
+python -m genephen_eval.cli --gtr prototype/sample/gtr_hspb1_sample.xml --task gtr
+
 # tests (stdlib unittest, no pytest required)
 python -m unittest discover -s tests
 ```
@@ -37,8 +40,8 @@ the chunker/retriever), so the added loss is correctly localized to generation.
 
 ```
 schemas.py     Span / Cell / Record / Chunk / InventoryUnit / Document / BackendResult
-ingestion.py   parse_pmc_xml + chunkers (naive_fixed, section_aware)
-inventory.py   source-derived fact inventory (variants + case cells) = reference-free recall standard
+ingestion.py   parse_pmc_xml (UC1) + parse_gtr_xml (UC3) + chunkers (naive_fixed, section_aware, gtr_schema)
+inventory.py   source-derived fact inventory (UC1 variants + case cells; UC3 GTR triples) = reference-free recall standard
 metrics/       sectioning, retrieval, generation, consistency, attribution
 backends/      base.SummarizerBackend (interface) + mock.MockRAGBackend (deterministic, offline)
 runner.py      temperature × K-sample orchestration → stage metrics + attribution

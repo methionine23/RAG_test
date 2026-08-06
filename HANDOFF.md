@@ -26,14 +26,17 @@ Real, tested, offline (stdlib only, no network/model):
 
 - **`genephen_eval/` package** — end-to-end pipeline: ingest → chunk → retrieve →
   extract (mock backend) → S1/S2/S3 metrics → attribution → report.
-  - `ingestion.py` PMC/PubMed XML parser + `naive_fixed` / `section_aware` chunkers
-  - `inventory.py` source-derived fact inventory (reference-free recall standard)
+  - `ingestion.py` PMC/PubMed XML parser (UC1) + **GTR XML parser (UC3)** +
+    `naive_fixed` / `section_aware` / `gtr_schema` chunkers
+  - `inventory.py` source-derived fact inventory (reference-free recall standard):
+    UC1 variants + case cells, **UC3 GTR condition/method relation triples**
   - `metrics/` sectioning (S1), retrieval (S2), generation (S3: tiered grounding,
     silver recall, provenance), consistency (SelfCheck), attribution (loss budget)
   - `backends/` `SummarizerBackend` interface + deterministic offline `MockRAGBackend`
   - `runner.py` temperature × K-sample sweep · `report.py` · `cli.py`
-- **`tests/test_harness.py`** — 13 unit + e2e tests, all passing.
-- **`prototype/`** — two illustrative demos + `fetch_entrez.py` + synthetic PMC-XML fixture.
+- **`tests/test_harness.py`** — 20 unit + e2e tests, all passing (incl. UC3 GTR).
+- **`prototype/`** — two illustrative demos + `fetch_entrez.py` + synthetic PMC-XML (UC1)
+  and GTR-XML (UC3) fixtures.
 - **`docs/00–05`** — plan, cited literature review, metric design, schemas/architecture,
   stage-evaluation method, baseline-notebook analysis + genePhen plugin path.
 
@@ -42,6 +45,7 @@ Verify in ~2 s:
 python3 -m unittest discover -s tests
 python3 -m genephen_eval.cli --xml prototype/sample/hspb1_pubmed_sample.xml --task case
 python3 -m genephen_eval.cli --xml prototype/sample/hspb1_pubmed_sample.xml --chunker naive_fixed
+python3 -m genephen_eval.cli --gtr prototype/sample/gtr_hspb1_sample.xml --task gtr   # UC3
 ```
 With the mock backend, as temperature 0→1: faithfulness 1.0→0.91, hallucination
 0.0→0.07, recall 0.88→0.49, self-consistency 1.0→0.27, and the attribution budget shifts
@@ -53,7 +57,8 @@ loss (~0.06) that `section_aware` doesn't — the stage attribution working as i
 P0 scoping/schemas ✅ · P1 UC1 ingestion (partial: XML parser + fixture ✅, real corpus
 pending) · P2 backends (interface ✅, mock ✅, real pending) · P3 metric stack ✅ (model
 tiers pending) · P4 experiment matrix (runner ✅, real backends pending) · P5 human
-calibration (pending) · P6 UC2/UC3 (pending) · P7 analysis/report (renderer ✅).
+calibration (pending) · P6 UC2/UC3 (**UC3 GTR ingester + schema chunker + triple
+inventory ✅ offline**; UC2 biochem-PDF pending) · P7 analysis/report (renderer ✅).
 
 ## Planned next (pick up here, in order)
 
@@ -66,8 +71,10 @@ calibration (pending) · P6 UC2/UC3 (pending) · P7 analysis/report (renderer �
    `cell_faithfulness` (replaces the lexical fallback for free-text fields).
 3. **Real retriever** — swap `LexicalRetriever` for embeddings / the RAG engine's
    retriever behind the same `retrieve(query, chunks, k)` signature.
-4. **UC3 GTR-XML + UC2 biochem-PDF ingesters** — same `Document` output contract;
-   schema-specific chunking (docs/04 §7).
+4. **UC2 biochem-PDF ingester** — same `Document` output contract; layout/section parser
+   + pathway (entity/reaction/relation) schema chunking (docs/04 §7). *(UC3 GTR-XML
+   ingester now done offline — `parse_gtr_xml` + `chunk_gtr_schema` + GTR triple
+   inventory + `--task gtr`; real data needs `efetch db=gtr` in the NCBI-enabled env.)*
 5. **P5 calibration** — load `HSPB1_ground_truth.tsv`; measure metric↔human agreement;
    audit inventory precision/recall to bound silver-recall bias.
 

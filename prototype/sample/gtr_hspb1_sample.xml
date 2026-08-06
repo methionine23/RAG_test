@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  SYNTHETIC fixture, structurally modeled on NCBI GTR (Genetic Testing Registry)
+  eutils output (efetch db=gtr). It is NOT redistributed GTR data. Lab names,
+  condition names, and method descriptions are illustrative (real HSPB1-related
+  conditions used only as realistic examples). Purpose: exercise the UC3
+  schema-specific (element-routed) sectioning + retrieval fidelity metrics
+  offline. Replace with real Entrez output via prototype/fetch_entrez.py
+  (db=gtr) in an environment with NCBI access.
+-->
+<GTRLabData>
+  <GTRLabTest id="GTR000500001">
+    <TestName>HSPB1 Full Gene Sequencing</TestName>
+    <Organization>Acme Genetics Laboratory</Organization>
+    <Genes>
+      <Gene><Symbol>HSPB1</Symbol></Gene>
+    </Genes>
+    <Conditions>
+      <Condition><Name>Charcot-Marie-Tooth disease axonal type 2F</Name><Identifier db="MedGen">C1843155</Identifier></Condition>
+      <Condition><Name>Distal hereditary motor neuronopathy type 2B</Name><Identifier db="MedGen">C1970331</Identifier></Condition>
+    </Conditions>
+    <Methods>
+      <Method category="Molecular Genetics"><Name>Sequence analysis of the entire coding region</Name></Method>
+      <Method category="Molecular Genetics"><Name>Deletion duplication analysis</Name></Method>
+    </Methods>
+  </GTRLabTest>
+  <GTRLabTest id="GTR000500002">
+    <TestName>Inherited Neuropathy NGS Panel</TestName>
+    <Organization>Northwind Molecular Diagnostics</Organization>
+    <Genes>
+      <Gene><Symbol>HSPB1</Symbol></Gene>
+      <Gene><Symbol>MFN2</Symbol></Gene>
+    </Genes>
+    <Conditions>
+      <Condition><Name>Hereditary motor and sensory neuropathy</Name><Identifier db="MedGen">C0917814</Identifier></Condition>
+    </Conditions>
+    <Methods>
+      <Method category="Molecular Genetics"><Name>Next generation sequencing panel</Name></Method>
+    </Methods>
+  </GTRLabTest>
+</GTRLabData>

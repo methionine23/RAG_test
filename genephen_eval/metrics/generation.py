@@ -23,7 +23,10 @@ CATEGORICAL_FIELDS = {"gene", "hgvs_c", "hgvs_p", "variant", "Mutation", "transc
                       "age_onset", "Age_of_onset", "Age", "onset"}
 
 FREE_TEXT_FIELDS = {"symptom", "Symptoms", "Laboratory_findings", "Family_history",
-                    "disease", "evidence"}
+                    "disease", "evidence",
+                    # UC3 GTR schema fields: disease/method names are free text, so a
+                    # reworded surface form earns partial (lexical/NLI) credit.
+                    "condition", "method", "test", "test_name"}
 
 
 def _toks(s: str) -> set:

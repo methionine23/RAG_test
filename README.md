@@ -43,9 +43,10 @@ genephen_eval/                   ← the evaluation harness (real, tested packag
   metrics/   sectioning · retrieval · generation · consistency · attribution
   backends/  base (SummarizerBackend) · mock (deterministic, offline)
   README.md
-tests/test_harness.py            13 unit + end-to-end tests (stdlib unittest)
+tests/test_harness.py            20 unit + end-to-end tests (stdlib unittest)
 prototype/                       ← standalone illustrative demos + data
-  fidelity_demo.py rag_stage_demo.py fetch_entrez.py sample/hspb1_pubmed_sample.xml
+  fidelity_demo.py rag_stage_demo.py fetch_entrez.py
+  sample/hspb1_pubmed_sample.xml (UC1) · sample/gtr_hspb1_sample.xml (UC3)
 pyproject.toml
 ```
 
@@ -53,9 +54,12 @@ pyproject.toml
 
 ```bash
 # the harness: end-to-end fidelity report (ingest → chunk → retrieve → extract → S1/S2/S3 → attribution)
+# UC1 — PMC/PubMed full-text XML
 python3 -m genephen_eval.cli --xml prototype/sample/hspb1_pubmed_sample.xml --task case
 python3 -m genephen_eval.cli --xml prototype/sample/hspb1_pubmed_sample.xml --chunker naive_fixed
-python3 -m unittest discover -s tests          # 13 tests
+# UC3 — NIH GTR XML (chunked along the GTR schema: test → gene / condition / method)
+python3 -m genephen_eval.cli --gtr prototype/sample/gtr_hspb1_sample.xml --task gtr
+python3 -m unittest discover -s tests          # 20 tests
 
 # the standalone illustrative demos
 python3 prototype/fidelity_demo.py             # cell-level faithfulness / recall / provenance / stability
